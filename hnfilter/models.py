@@ -5,7 +5,7 @@ from __future__ import annotations
 import urllib.parse
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Story(BaseModel):
@@ -68,8 +68,25 @@ class Verdict(BaseModel):
     """LLM scoring verdict for an individual story."""
 
     id: int
-    score: int = Field(ge=0, le=10, description="Relevance score from 0 to 10")
-    reason: str = Field(default="", max_length=150, description="Short one-line reason")
+    score: int = Field(default=0, ge=0, le=10, description="Relevance score from 0 to 10")
+    reason: str = Field(default="", description="Short one-line reason")
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def sanitize_reason(cls, v: Any) -> str:
+        text = str(v).strip() if v is not None else ""
+        if len(text) > 200:
+            return text[:197] + "..."
+        return text
+
+    @field_validator("score", mode="before")
+    @classmethod
+    def clamp_score(cls, v: Any) -> int:
+        try:
+            val = round(float(v))
+            return max(0, min(10, val))
+        except (ValueError, TypeError):
+            return 0
 
 
 class VerdictBatch(BaseModel):

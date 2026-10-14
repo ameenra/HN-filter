@@ -29,6 +29,12 @@ def test_story_from_standard_hn_item():
     assert story.hn_url == "https://news.ycombinator.com/item?id=12345"
 
 
+def test_story_validation_failure():
+    """Verify Story raises ValidationError when given incompatible field types."""
+    with pytest.raises(ValidationError):
+        Story(id="invalid_id", title="Test", url="https://example.com", domain="example.com", score=10)
+
+
 def test_story_without_url_fallback():
     """Verify Ask HN or text stories default url to the HN item link."""
     raw_item = {
@@ -71,13 +77,19 @@ def test_verdict_validation():
     assert v_valid.score == 8
     assert v_valid.reason == "Strong match for compilers"
 
-    # Score below 0
-    with pytest.raises(ValidationError):
-        Verdict(id=123, score=-1, reason="Negative score")
+    # Score below 0 clamped to 0
+    v_low = Verdict(id=123, score=-5, reason="Negative score")
+    assert v_low.score == 0
 
-    # Score above 10
-    with pytest.raises(ValidationError):
-        Verdict(id=123, score=11, reason="Score exceeds 10")
+    # Score above 10 clamped to 10
+    v_high = Verdict(id=123, score=15, reason="Score exceeds 10")
+    assert v_high.score == 10
+
+    # Long reason truncated safely without error
+    long_reason = "A" * 250
+    v_long = Verdict(id=123, score=5, reason=long_reason)
+    assert len(v_long.reason) == 200
+    assert v_long.reason.endswith("...")
 
 
 def test_verdict_batch_deserialization():

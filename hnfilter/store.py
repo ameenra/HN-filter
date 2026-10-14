@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shutil
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -74,6 +75,13 @@ class SeenStore:
                 store_path,
                 exc,
             )
+            try:
+                backup_path = store_path.with_suffix(".json.corrupt.bak")
+                if store_path.exists() and not backup_path.exists():
+                    shutil.copy2(store_path, backup_path)
+                    logger.info("Preserved corrupted store backup at %s", backup_path)
+            except OSError:
+                pass
             return cls(path=store_path)
 
     def filter_new(self, stories: Sequence[Story]) -> list[Story]:

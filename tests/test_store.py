@@ -40,6 +40,10 @@ def test_store_load_corrupt_file(tmp_path):
     assert len(store) == 0
     assert store.seen == {}
 
+    backup_path = tmp_path / "seen.json.corrupt.bak"
+    assert backup_path.exists()
+    assert backup_path.read_text(encoding="utf-8") == "{ corrupt json ... not valid"
+
 
 def test_store_load_non_dict_json(tmp_path):
     """Verify JSON that is a list instead of a dictionary resets cleanly."""

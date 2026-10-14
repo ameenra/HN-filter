@@ -58,8 +58,12 @@ jobs:
       - name: Notify Discord on failure
         if: failure()
         run: |
-          PAYLOAD=$(python3 -c "import json, os; print(json.dumps({'content': f'⚠️ **HN Digest Failed**: {os.environ[\"RUN_URL\"]} '}))")
-          curl -sS -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            PAYLOAD=$(python3 -c "import json, os; print(json.dumps({'content': f'⚠️ **HN Digest Failed**: {os.environ[\"RUN_URL\"]} '}))")
+            curl -sS -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+          else
+            echo "DISCORD_WEBHOOK_URL is not set; skipping failure notification."
+          fi
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

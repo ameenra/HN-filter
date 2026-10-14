@@ -1,8 +1,9 @@
 """Configuration management for HN Filter."""
 
 from pathlib import Path
+from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +18,14 @@ class Settings(BaseSettings):
         default="gemini-2.5-flash",
         description="Gemini model name to use for story scoring",
     )
+
+    @field_validator("gemini_model", mode="before")
+    @classmethod
+    def default_empty_model(cls, v: Any) -> str:
+        if not v or not str(v).strip():
+            return "gemini-2.5-flash"
+        return str(v).strip()
+
     discord_webhook_url: str = Field(
         default="",
         description="Discord Webhook URL for posting digests",

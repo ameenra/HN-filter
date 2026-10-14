@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 from hnfilter.config import Settings
 from hnfilter.hn import fetch_stories
-from hnfilter.models import DigestItem
+from hnfilter.models import DigestItem, Verdict
 from hnfilter.notify import (
     chunk_messages,
     format_digest_header,
@@ -95,8 +95,12 @@ async def run_pipeline(
         )
 
         # 6. Pair stories with verdicts and filter picks
+        verdict_map = {v.id: v for v in verdicts}
         digest_items: list[DigestItem] = []
-        for story, verdict in zip(new_stories, verdicts, strict=False):
+        for story in new_stories:
+            verdict = verdict_map.get(story.id) or Verdict(
+                id=story.id, score=0, reason="Verdict not found"
+            )
             digest_items.append(DigestItem(story=story, verdict=verdict))
 
         # Filter: score >= threshold, sort descending by score then points

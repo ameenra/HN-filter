@@ -68,3 +68,11 @@ def test_settings_validation_bounds(monkeypatch):
     monkeypatch.setenv("BATCH_SIZE", "0")  # < 1
     with pytest.raises(ValidationError):
         Settings(_env_file=None)
+
+
+def test_settings_empty_model_fallback(monkeypatch):
+    """Verify empty or blank GEMINI_MODEL falls back to gemini-2.5-flash."""
+    monkeypatch.setenv("GEMINI_MODEL", "   ")
+    settings = Settings(_env_file=None)
+    assert settings.gemini_model == "gemini-2.5-flash"
+

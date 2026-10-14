@@ -123,6 +123,8 @@ def send_discord_message(
                         except ValueError:
                             pass
 
+                retry_after = max(0.01, retry_after)
+
                 logger.warning(
                     "Discord webhook rate limited (429). Retrying after %.2fs (attempt %d/%d)...",
                     retry_after,

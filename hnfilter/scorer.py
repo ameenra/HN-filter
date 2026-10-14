@@ -118,7 +118,12 @@ def score_batch(
 
         except Exception as exc:
             is_retryable = False
-            if isinstance(exc, errors.APIError) and exc.code in (429, 500, 502, 503, 504) or any(token in str(exc) for token in ("429", "ResourceExhausted", "503", "500")):
+            if (
+                isinstance(exc, errors.APIError)
+                and exc.code in (429, 500, 502, 503, 504)
+                or any(token in str(exc) for token in ("429", "ResourceExhausted", "503", "500"))
+                or isinstance(exc, (ValueError, json.JSONDecodeError))
+            ):
                 is_retryable = True
 
             if is_retryable and attempt < max_retries:

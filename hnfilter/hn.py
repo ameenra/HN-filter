@@ -19,13 +19,26 @@ async def fetch_top_story_ids(
     client: httpx.AsyncClient,
     limit: int = 150,
     base_url: str = HN_BASE_URL,
+    max_retries: int = 2,
 ) -> list[int]:
-    """Fetch top story IDs from Hacker News API."""
+    """Fetch top story IDs from Hacker News API with retry on transient errors."""
     url = f"{base_url}/topstories.json"
-    response = await client.get(url)
-    response.raise_for_status()
-    ids: list[int] = response.json()
-    return ids[:limit]
+    for attempt in range(max_retries + 1):
+        try:
+            response = await client.get(url)
+            if response.status_code == 200:
+                ids: list[int] = response.json()
+                return ids[:limit]
+            if response.status_code >= 500 and attempt < max_retries:
+                await asyncio.sleep(0.2 * (2**attempt))
+                continue
+            response.raise_for_status()
+        except (httpx.TransportError, httpx.TimeoutException):
+            if attempt < max_retries:
+                await asyncio.sleep(0.2 * (2**attempt))
+                continue
+            raise
+    return []
 
 
 async def fetch_item(
