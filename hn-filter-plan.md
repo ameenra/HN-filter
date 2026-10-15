@@ -411,10 +411,12 @@ flowchart TD
         ```bash
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git pull --rebase origin main
         git add data/seen.json
-        git diff --staged --quiet || git commit -m "chore(state): update seen.json [skip ci]"
-        git push origin main
+        if ! git diff --staged --quiet; then
+          git commit -m "chore(state): update seen.json [skip ci]"
+          git pull --rebase -X theirs origin main
+          git push origin main
+        fi
         ```
      7. Discord alert on failure: Send message to webhook containing link to the failed GitHub Actions run log.
 
